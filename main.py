@@ -55,7 +55,7 @@ def compute_box2origin(vehicle_box, vehicle_transform):
 
 def test_box2origin(vehicle):
     vehicle_bbox = vehicle.bounding_box
-    print("-----------------------------------------------------")
+    print("-"*10, "a new time step", "-"*10)
     print("Vehicle bbox location (local):", vehicle_bbox.location)
     vehicle_transform = vehicle.get_transform()
     print("Vehicle location (global):", vehicle_transform.location)
@@ -71,7 +71,7 @@ def test_box2origin(vehicle):
     vertices = geometry.convert_box_to_vertices(box2origin, size)
     print("True vertices from carla API: \n", carla_vertices)
     print('Calculated vertices from box2origin\n', vertices)
-    print("-----------------------------------------------------")
+    print("-"*35)
 
 
 def test_min_distance(ego, bv):
@@ -89,8 +89,8 @@ def test_min_distance(ego, bv):
         box_collider_ego, box_collider_bv)
     end = time.time()
     cal_min_dis_time = end - start
-    print("-----------------------------------------------------")
-    print("min distance using GJK method: ", dist)
+    print("-"*10, "a new time step", "-"*10)
+    print("min distance using GJK method: ", round(dist, 4))
 
     # center distance
     ego_location = ego_transform.location
@@ -98,12 +98,12 @@ def test_min_distance(ego, bv):
     distance = ego_location.distance(bv_transform.location)
     end1 = time.time()
     cal_distance_time = end1 - start1
-    print("center point distance using carla API: ", distance)
+    print("center point distance using carla API: ", round(distance, 4))
 
     # corresponding time
     print("min distance time: ", cal_min_dis_time)
     print("center point distance time: ", cal_distance_time)
-    print("-----------------------------------------------------")
+    print("-"*37)
 
 
 def main():
@@ -121,8 +121,12 @@ def main():
         if bp2.has_attribute('color'):
             color2 = random.choice(bp2.get_attribute('color').recommended_values)
             bp2.set_attribute('color', color2)
-        transform1 = random.choice(world.get_map().get_spawn_points())
-        transform2 = random.choice(world.get_map().get_spawn_points())
+        spawn_points = world.get_map().get_spawn_points()
+        transform1 = random.choice(spawn_points)
+        transform2 = random.choice(spawn_points)
+        while transform2.location.distance(transform1.location) > 50:  # spawn points of vehicle shouldn't be too far
+            transform2 = random.choice(spawn_points)
+
         bp1.set_attribute('role_name', 'hero')
         bp1.set_attribute('role_name', 'background')
         ego = world.spawn_actor(bp1, transform1)
@@ -135,8 +139,12 @@ def main():
         ego.set_autopilot(True)
         bv.set_autopilot(True)
 
-        for _ in range(2500):
-            world.tick()
+        while True:
+            # # set the sectator to follow the ego vehicle
+            # spectator = world.get_spectator()
+            # transform = ego.get_transform()
+            # spectator.set_transform(carla.Transform(transform.location + carla.Location(z=60),
+            #                                         carla.Rotation(pitch=-90)))
             # test_box2origin(ego)  # Test the function of generating box2origin matrix(4x4)
             test_min_distance(ego, bv)
 
